@@ -1,0 +1,21 @@
+{
+  "name": "sharepreview",
+  "version": "0.1.0",
+  "description": "Preview Open Graph share cards from localhost URLs. Agent-friendly CLI with bundled skills.",
+  "type": "module",
+  "bin": {
+    "sharepreview": "./bin/sharepreview.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "opengraph",
+    "og",
+    "social-preview",
+    "twitter-card",
+    "cli",
+    "agents"
+  ],
+  "license": "MIT"
+}
