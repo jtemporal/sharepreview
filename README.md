@@ -4,6 +4,8 @@ Preview Open Graph share cards from a **localhost URL** — the way they look wh
 
 Built for developers and AI agents working on static sites, blogs, and apps with local preview servers.
 
+**This is a local development tool.** It is not meant to be hosted publicly, tunneled, or pointed at untrusted URLs. The preview server binds to `127.0.0.1` only and all outbound fetches are restricted to localhost.
+
 ## Install
 
 ```bash
@@ -19,6 +21,8 @@ node bin/sharepreview.mjs http://127.0.0.1:4000/my-post/
 ```
 
 Requires **Node 18+**. Zero runtime dependencies.
+
+Use whatever port your dev server runs on (`4000`, `4321`, `5173`, etc.) — sharepreview only checks that the host is localhost.
 
 ## Usage
 
@@ -50,8 +54,20 @@ The preview page includes:
 - X/Twitter, LinkedIn, Facebook, Slack, Discord, and iMessage mocks
 - Light/dark mode toggle
 - Validation banner for missing tags or image warnings
-- **Copy preview link** — copies the `http://127.0.0.1:4711/...` URL to your clipboard (handy to re-open, paste in notes, or share if you tunnel localhost)
 - Collapsible extracted metadata JSON
+
+While the preview server is running:
+
+- **Another page** — paste a new localhost URL in the Source field and click **Load**
+- **Same page, updated OG tags** — click **Refresh** (or reload the tab)
+
+No need to stop and restart the CLI. Agents can switch pages with:
+
+```bash
+curl -X POST http://127.0.0.1:4711/source \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"http://127.0.0.1:4000/another-post/"}'
+```
 
 Press **Ctrl+C** to stop the preview server.
 
@@ -99,6 +115,22 @@ The skill lives at `skills/sharepreview/SKILL.md` and documents the preview work
   "warnings": []
 }
 ```
+
+## Security
+
+sharepreview is hardened for **local-only** use:
+
+| Guard | What it does |
+|-------|----------------|
+| **Localhost-only fetches** | Source pages, `og:image`, and the image proxy only accept `http://127.0.0.1`, `http://localhost`, or `http://[::1]` |
+| **Redirect validation** | Each redirect hop is checked — a public URL cannot redirect you to an internal address |
+| **Timeouts** | Fetches abort after 10 seconds |
+| **Size limits** | HTML capped at 5 MB; images at 20 MB |
+| **Loopback bind** | Preview server listens on `127.0.0.1` only |
+
+Do **not** expose the preview server to the internet (ngrok, Cloudflare Tunnel, `0.0.0.0` bind, etc.). If you ever host a shared version, that would need a separate design with authentication and stricter sandboxing.
+
+`og:image` must resolve to a localhost URL (relative paths are fine — they resolve against your dev server). External CDN images are intentionally not fetched.
 
 ## How it differs from other tools
 

@@ -19,7 +19,7 @@ Preview how a page will look when shared on X/Twitter, LinkedIn, or Slack — us
 
 ## Workflow
 
-1. Confirm the site preview is running (e.g. `http://127.0.0.1:4000/<slug>/`).
+1. Confirm the site preview is running on localhost (any port).
 2. Run sharepreview against that exact URL:
 
 ```bash
@@ -31,6 +31,8 @@ sharepreview http://127.0.0.1:4000/<slug>/ --json
    - Check `image_info` for og:image dimensions (target ~1200×630)
    - Give the author `preview_url` to open in a browser
 4. Keep the preview server running until the author approves.
+   - New page: paste the localhost URL in the preview UI and click **Load** (or `POST /source` with JSON `{ "url": "..." }`).
+   - Same page, OG edits: click **Refresh**. Do not restart the CLI.
 5. Optional: `sharepreview <url> --screenshot share-preview.png` (requires `npm install puppeteer`)
 5. Use `--validate` in CI or pre-commit checks:
 
@@ -57,6 +59,8 @@ sharepreview install-skill --target grok
 ## Notes
 
 - Requires Node 18+.
+- **Local dev only** — do not tunnel or host the preview server publicly.
+- Only `http://127.0.0.1` / `http://localhost` URLs are accepted (source page and `og:image`).
 - The preview server runs on a separate port (default `4711`) from the site preview.
 - `og:image` is proxied through the preview server so relative image paths work.
 - Press Ctrl+C to stop the preview server when done.
