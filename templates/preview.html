@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Share Preview</title>
     <style>
-      :root {
-        color-scheme: light dark;
+      :root,
+      [data-theme="light"] {
+        color-scheme: light;
         --bg: #f4f5f7;
         --panel: #ffffff;
         --text: #111827;
@@ -14,18 +15,23 @@
         --border: #e5e7eb;
         --accent: #2563eb;
         --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+        --code-bg: #0b1020;
+        --code-text: #e5e7eb;
+        --img-bg: #d1d5db;
       }
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #0f1115;
-          --panel: #171a21;
-          --text: #f3f4f6;
-          --muted: #9ca3af;
-          --border: #2a3140;
-          --accent: #60a5fa;
-          --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-        }
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f1115;
+        --panel: #171a21;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #2a3140;
+        --accent: #60a5fa;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --code-bg: #090d18;
+        --code-text: #e5e7eb;
+        --img-bg: #374151;
       }
 
       * { box-sizing: border-box; }
@@ -35,6 +41,7 @@
         background: var(--bg);
         color: var(--text);
         line-height: 1.5;
+        transition: background 0.2s ease, color 0.2s ease;
       }
 
       .wrap {
@@ -43,7 +50,11 @@
         padding: 32px 20px 48px;
       }
 
-      header {
+      .header-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
         margin-bottom: 28px;
       }
 
@@ -57,6 +68,18 @@
         color: var(--muted);
         font-size: 0.95rem;
         word-break: break-all;
+      }
+
+      .theme-toggle {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
 
       .tabs {
@@ -84,17 +107,36 @@
 
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 20px;
+        justify-items: center;
+      }
+
+      .grid.focused {
+        grid-template-columns: 1fr;
+        max-width: 520px;
+        margin: 0 auto;
       }
 
       .card-shell {
+        width: 100%;
+        max-width: 360px;
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 16px;
         box-shadow: var(--shadow);
         overflow: hidden;
       }
+
+      .grid.focused .card-shell {
+        max-width: 504px;
+      }
+
+      .grid.focused .card-shell[data-platform="slack"] {
+        max-width: 440px;
+      }
+
+      .card-shell.hidden { display: none; }
 
       .card-shell h2 {
         margin: 0;
@@ -106,46 +148,61 @@
         border-bottom: 1px solid var(--border);
       }
 
-      .mock {
+      .mock-inner {
         padding: 18px;
+        display: flex;
+        justify-content: center;
       }
 
-      .mock.hidden { display: none; }
+      .share-card {
+        width: 100%;
+        max-width: 320px;
+      }
+
+      .grid.focused .share-card {
+        max-width: 504px;
+      }
+
+      .grid.focused .card-shell[data-platform="slack"] .share-card {
+        max-width: 400px;
+      }
 
       .x-card, .li-card, .slack-card {
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 12px;
         overflow: hidden;
         background: var(--panel);
       }
 
-      .x-card img, .li-card img, .slack-card img {
+      .x-card img, .li-card img {
         display: block;
         width: 100%;
         aspect-ratio: 1.91 / 1;
         object-fit: cover;
-        background: #d1d5db;
+        background: var(--img-bg);
       }
 
       .x-body, .li-body, .slack-body {
-        padding: 12px 14px 14px;
+        padding: 10px 12px 12px;
       }
 
       .domain {
         color: var(--muted);
-        font-size: 0.8rem;
-        margin-bottom: 4px;
+        font-size: 0.72rem;
+        margin-bottom: 2px;
       }
 
       .title {
         font-weight: 700;
-        font-size: 1rem;
-        margin-bottom: 4px;
+        font-size: 0.88rem;
+        margin-bottom: 2px;
+        line-height: 1.3;
       }
 
       .desc {
         color: var(--muted);
-        font-size: 0.9rem;
+        font-size: 0.78rem;
+        line-height: 1.35;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -154,13 +211,15 @@
 
       .slack-card {
         display: grid;
-        grid-template-columns: 96px 1fr;
+        grid-template-columns: 80px 1fr;
       }
 
       .slack-card img {
-        width: 96px;
-        height: 96px;
-        aspect-ratio: auto;
+        display: block;
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        background: var(--img-bg);
       }
 
       .meta-panel {
@@ -168,25 +227,48 @@
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 16px;
-        padding: 16px 18px;
+        overflow: hidden;
       }
 
-      .meta-panel h3 {
-        margin: 0 0 10px;
+      .meta-panel summary {
+        padding: 14px 18px;
+        cursor: pointer;
         font-size: 0.95rem;
+        font-weight: 600;
+        list-style: none;
+        user-select: none;
+      }
+
+      .meta-panel summary::-webkit-details-marker { display: none; }
+
+      .meta-panel summary::after {
+        content: 'Show';
+        float: right;
+        color: var(--muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+      }
+
+      .meta-panel[open] summary::after { content: 'Hide'; }
+
+      .meta-body {
+        padding: 0 18px 16px;
+        border-top: 1px solid var(--border);
       }
 
       .warnings {
-        margin: 0 0 12px;
+        margin: 14px 0 12px;
         padding-left: 18px;
         color: #b45309;
       }
 
+      [data-theme="dark"] .warnings { color: #fbbf24; }
+
       pre {
         margin: 0;
         padding: 14px;
-        background: #0b1020;
-        color: #e5e7eb;
+        background: var(--code-bg);
+        color: var(--code-text);
         border-radius: 12px;
         overflow: auto;
         font-size: 0.78rem;
@@ -195,10 +277,15 @@
   </head>
   <body>
     <div class="wrap">
-      <header>
-        <h1>Share Preview</h1>
-        <p id="source">Source: <!--SOURCE_URL--></p>
-      </header>
+      <div class="header-row">
+        <header>
+          <h1>Share Preview</h1>
+          <p id="source">Source: <!--SOURCE_URL--></p>
+        </header>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
+          Dark mode
+        </button>
+      </div>
 
       <div class="tabs" id="tabs">
         <button class="tab active" data-platform="all">All</button>
@@ -208,59 +295,84 @@
       </div>
 
       <div class="grid" id="grid">
-        <section class="card-shell mock" data-platform="twitter">
+        <section class="card-shell" data-platform="twitter">
           <h2>X / Twitter</h2>
-          <div class="mock">
-            <div class="x-card">
-              <img id="tw-image" alt="" />
-              <div class="x-body">
-                <div class="domain" id="tw-domain"></div>
-                <div class="title" id="tw-title"></div>
-                <div class="desc" id="tw-desc"></div>
+          <div class="mock-inner">
+            <div class="share-card">
+              <div class="x-card">
+                <img id="tw-image" alt="" />
+                <div class="x-body">
+                  <div class="domain" id="tw-domain"></div>
+                  <div class="title" id="tw-title"></div>
+                  <div class="desc" id="tw-desc"></div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="card-shell mock" data-platform="linkedin">
+        <section class="card-shell" data-platform="linkedin">
           <h2>LinkedIn</h2>
-          <div class="mock">
-            <div class="li-card">
-              <img id="li-image" alt="" />
-              <div class="li-body">
-                <div class="domain" id="li-domain"></div>
-                <div class="title" id="li-title"></div>
-                <div class="desc" id="li-desc"></div>
+          <div class="mock-inner">
+            <div class="share-card">
+              <div class="li-card">
+                <img id="li-image" alt="" />
+                <div class="li-body">
+                  <div class="domain" id="li-domain"></div>
+                  <div class="title" id="li-title"></div>
+                  <div class="desc" id="li-desc"></div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="card-shell mock" data-platform="slack">
+        <section class="card-shell" data-platform="slack">
           <h2>Slack</h2>
-          <div class="mock">
-            <div class="slack-card">
-              <img id="sl-image" alt="" />
-              <div class="slack-body">
-                <div class="domain" id="sl-domain"></div>
-                <div class="title" id="sl-title"></div>
-                <div class="desc" id="sl-desc"></div>
+          <div class="mock-inner">
+            <div class="share-card">
+              <div class="slack-card">
+                <img id="sl-image" alt="" />
+                <div class="slack-body">
+                  <div class="domain" id="sl-domain"></div>
+                  <div class="title" id="sl-title"></div>
+                  <div class="desc" id="sl-desc"></div>
+                </div>
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      <section class="meta-panel">
-        <h3>Extracted meta</h3>
-        <ul class="warnings" id="warnings"></ul>
-        <pre id="json"></pre>
-      </section>
+      <details class="meta-panel">
+        <summary>Extracted metadata</summary>
+        <div class="meta-body">
+          <ul class="warnings" id="warnings"></ul>
+          <pre id="json"></pre>
+        </div>
+      </details>
     </div>
 
     <script id="payload" type="application/json"><!--PAYLOAD_JSON--></script>
     <script>
       const data = JSON.parse(document.getElementById('payload').textContent);
+      const root = document.documentElement;
+      const themeToggle = document.getElementById('theme-toggle');
+      const THEME_KEY = 'sharepreview-theme';
+
+      function applyTheme(theme) {
+        root.dataset.theme = theme;
+        themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+        localStorage.setItem(THEME_KEY, theme);
+      }
+
+      applyTheme(localStorage.getItem(THEME_KEY)
+        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+      themeToggle.addEventListener('click', () => {
+        applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+      });
+
       const domain = (() => {
         try { return new URL(data.og.url).hostname.replace(/^www\./, ''); }
         catch { return 'example.com'; }
@@ -291,17 +403,20 @@
         li.textContent = warning;
         warnings.appendChild(li);
       });
+      if (!data.warnings?.length) warnings.remove();
 
       document.getElementById('json').textContent = JSON.stringify(data, null, 2);
 
       const tabs = document.getElementById('tabs');
-      const cards = [...document.querySelectorAll('.card-shell.mock')];
+      const grid = document.getElementById('grid');
+      const cards = [...document.querySelectorAll('.card-shell')];
 
       tabs.addEventListener('click', (event) => {
         const button = event.target.closest('.tab');
         if (!button) return;
         const platform = button.dataset.platform;
         tabs.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab === button));
+        grid.classList.toggle('focused', platform !== 'all');
         cards.forEach((card) => {
           card.classList.toggle('hidden', platform !== 'all' && card.dataset.platform !== platform);
         });
