@@ -1,3 +1,6 @@
+import { safeFetch, LIMITS } from './safe-fetch.mjs';
+import { assertLocalhostUrl } from './url-policy.mjs';
+
 export function readImageDimensions(buffer, contentType = '') {
   if (!buffer || buffer.length < 24) return null;
 
@@ -70,13 +73,24 @@ function readWebpDimensions(buffer) {
 export async function fetchImageInfo(imageUrl) {
   if (!imageUrl) return null;
 
-  const response = await fetch(imageUrl, { redirect: 'follow' });
-  if (!response.ok) {
-    return { error: `HTTP ${response.status}` };
+  try {
+    assertLocalhostUrl(imageUrl, 'og:image URL');
+  } catch (error) {
+    return { error: error.message };
   }
 
-  const contentType = response.headers.get('content-type') || '';
-  const buffer = Buffer.from(await response.arrayBuffer());
+  let buffer;
+  let contentType;
+
+  try {
+    ({ buffer, contentType } = await safeFetch(imageUrl, {
+      maxBytes: LIMITS.imageMaxBytes,
+      timeoutMs: LIMITS.timeoutMs,
+      label: 'og:image URL',
+    }));
+  } catch (error) {
+    return { error: error.message };
+  }
   const dimensions = readImageDimensions(buffer, contentType);
 
   if (!dimensions) {

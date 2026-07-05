@@ -1,3 +1,5 @@
+import { safeFetch, LIMITS } from './safe-fetch.mjs';
+
 const META_ATTR_RE = /<meta\s+([^>]*?)\/?>/gi;
 const TITLE_RE = /<title[^>]*>([\s\S]*?)<\/title>/i;
 const CANONICAL_RE = /<link[^>]+rel=["']canonical["'][^>]*>/i;
@@ -125,15 +127,13 @@ export function buildPreviewData(sourceUrl, html) {
 }
 
 export async function fetchPageMeta(sourceUrl) {
-  const response = await fetch(sourceUrl, {
+  const { buffer } = await safeFetch(sourceUrl, {
+    maxBytes: LIMITS.htmlMaxBytes,
+    timeoutMs: LIMITS.timeoutMs,
     headers: { 'User-Agent': 'sharepreview/0.1 (+https://github.com/jtemporal/sharepreview)' },
-    redirect: 'follow',
+    label: 'Source URL',
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${sourceUrl}: HTTP ${response.status}`);
-  }
-
-  const html = await response.text();
+  const html = buffer.toString('utf8');
   return buildPreviewData(sourceUrl, html);
 }
