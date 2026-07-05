@@ -18,6 +18,12 @@
         --code-bg: #0b1020;
         --code-text: #e5e7eb;
         --img-bg: #d1d5db;
+        --ok-bg: #ecfdf5;
+        --ok-text: #047857;
+        --warn-bg: #fffbeb;
+        --warn-text: #b45309;
+        --bad-bg: #fef2f2;
+        --bad-text: #b91c1c;
       }
 
       [data-theme="dark"] {
@@ -32,6 +38,12 @@
         --code-bg: #090d18;
         --code-text: #e5e7eb;
         --img-bg: #374151;
+        --ok-bg: #052e1c;
+        --ok-text: #6ee7b7;
+        --warn-bg: #3b2f13;
+        --warn-text: #fbbf24;
+        --bad-bg: #3f1d1d;
+        --bad-text: #fca5a5;
       }
 
       * { box-sizing: border-box; }
@@ -55,13 +67,10 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 28px;
+        margin-bottom: 16px;
       }
 
-      header h1 {
-        margin: 0 0 8px;
-        font-size: 1.5rem;
-      }
+      header h1 { margin: 0 0 8px; font-size: 1.5rem; }
 
       header p {
         margin: 0;
@@ -70,7 +79,13 @@
         word-break: break-all;
       }
 
-      .theme-toggle {
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .btn-ghost {
         border: 1px solid var(--border);
         background: var(--panel);
         color: var(--text);
@@ -79,7 +94,25 @@
         cursor: pointer;
         font-size: 0.85rem;
         white-space: nowrap;
-        flex-shrink: 0;
+      }
+
+      .status-banner {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+
+      .status-banner.ok { background: var(--ok-bg); color: var(--ok-text); }
+      .status-banner.warn { background: var(--warn-bg); color: var(--warn-text); }
+      .status-banner.bad { background: var(--bad-bg); color: var(--bad-text); }
+      .status-banner.hidden { display: none; }
+
+      .image-info {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 0.85rem;
       }
 
       .tabs {
@@ -128,14 +161,10 @@
         overflow: hidden;
       }
 
-      .grid.focused .card-shell {
-        max-width: 504px;
-      }
-
-      .grid.focused .card-shell[data-platform="slack"] {
-        max-width: 440px;
-      }
-
+      .grid.focused .card-shell { max-width: 504px; }
+      .grid.focused .card-shell[data-platform="slack"],
+      .grid.focused .card-shell[data-platform="discord"] { max-width: 440px; }
+      .grid.focused .card-shell[data-platform="imessage"] { max-width: 380px; }
       .card-shell.hidden { display: none; }
 
       .card-shell h2 {
@@ -154,27 +183,20 @@
         justify-content: center;
       }
 
-      .share-card {
-        width: 100%;
-        max-width: 320px;
-      }
+      .share-card { width: 100%; max-width: 320px; }
+      .grid.focused .share-card { max-width: 504px; }
+      .grid.focused .card-shell[data-platform="slack"] .share-card,
+      .grid.focused .card-shell[data-platform="discord"] .share-card { max-width: 400px; }
+      .grid.focused .card-shell[data-platform="imessage"] .share-card { max-width: 340px; }
 
-      .grid.focused .share-card {
-        max-width: 504px;
-      }
-
-      .grid.focused .card-shell[data-platform="slack"] .share-card {
-        max-width: 400px;
-      }
-
-      .x-card, .li-card, .slack-card {
+      .x-card, .li-card, .fb-card {
         border: 1px solid var(--border);
         border-radius: 12px;
         overflow: hidden;
         background: var(--panel);
       }
 
-      .x-card img, .li-card img {
+      .x-card img, .li-card img, .fb-card img {
         display: block;
         width: 100%;
         aspect-ratio: 1.91 / 1;
@@ -182,7 +204,7 @@
         background: var(--img-bg);
       }
 
-      .x-body, .li-body, .slack-body {
+      .x-body, .li-body, .fb-body, .slack-body, .discord-body, .imessage-body {
         padding: 10px 12px 12px;
       }
 
@@ -209,18 +231,56 @@
         overflow: hidden;
       }
 
-      .slack-card {
+      .slack-card, .discord-card {
         display: grid;
         grid-template-columns: 80px 1fr;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--panel);
       }
 
-      .slack-card img {
+      .discord-card { border-left: 4px solid #5865f2; }
+
+      .slack-card img, .discord-card img {
         display: block;
         width: 80px;
         height: 80px;
         object-fit: cover;
         background: var(--img-bg);
       }
+
+      .imessage-card {
+        display: grid;
+        grid-template-columns: 1fr 72px;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: #e9e9eb;
+        color: #111;
+      }
+
+      [data-theme="dark"] .imessage-card {
+        background: #2c2c2e;
+        color: #f2f2f7;
+      }
+
+      .imessage-card img {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: var(--img-bg);
+      }
+
+      .imessage-domain {
+        color: #6e6e73;
+        font-size: 0.68rem;
+        margin-bottom: 2px;
+      }
+
+      [data-theme="dark"] .imessage-domain { color: #aeaeb2; }
 
       .meta-panel {
         margin-top: 24px;
@@ -240,7 +300,6 @@
       }
 
       .meta-panel summary::-webkit-details-marker { display: none; }
-
       .meta-panel summary::after {
         content: 'Show';
         float: right;
@@ -248,7 +307,6 @@
         font-weight: 500;
         font-size: 0.85rem;
       }
-
       .meta-panel[open] summary::after { content: 'Hide'; }
 
       .meta-body {
@@ -259,10 +317,8 @@
       .warnings {
         margin: 14px 0 12px;
         padding-left: 18px;
-        color: #b45309;
+        color: var(--warn-text);
       }
-
-      [data-theme="dark"] .warnings { color: #fbbf24; }
 
       pre {
         margin: 0;
@@ -284,17 +340,9 @@
         line-height: 1.7;
       }
 
-      footer a {
-        color: var(--accent);
-        text-decoration: none;
-      }
-
+      footer a { color: var(--accent); text-decoration: none; }
       footer a:hover { text-decoration: underline; }
-
-      footer .sep {
-        margin: 0 0.45rem;
-        opacity: 0.45;
-      }
+      footer .sep { margin: 0 0.45rem; opacity: 0.45; }
     </style>
   </head>
   <body>
@@ -304,65 +352,49 @@
           <h1>Share Preview</h1>
           <p id="source">Source: <!--SOURCE_URL--></p>
         </header>
-        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
-          Dark mode
-        </button>
+        <div class="header-actions">
+          <button class="btn-ghost" id="copy-link" type="button">Copy preview link</button>
+          <button class="btn-ghost" id="theme-toggle" type="button" aria-label="Toggle theme">Dark mode</button>
+        </div>
       </div>
+
+      <div id="status-banner" class="status-banner hidden"></div>
+      <p class="image-info" id="image-info"></p>
 
       <div class="tabs" id="tabs">
         <button class="tab active" data-platform="all">All</button>
         <button class="tab" data-platform="twitter">X / Twitter</button>
         <button class="tab" data-platform="linkedin">LinkedIn</button>
+        <button class="tab" data-platform="facebook">Facebook</button>
         <button class="tab" data-platform="slack">Slack</button>
+        <button class="tab" data-platform="discord">Discord</button>
+        <button class="tab" data-platform="imessage">iMessage</button>
       </div>
 
       <div class="grid" id="grid">
         <section class="card-shell" data-platform="twitter">
           <h2>X / Twitter</h2>
-          <div class="mock-inner">
-            <div class="share-card">
-              <div class="x-card">
-                <img id="tw-image" alt="" />
-                <div class="x-body">
-                  <div class="domain" id="tw-domain"></div>
-                  <div class="title" id="tw-title"></div>
-                  <div class="desc" id="tw-desc"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="mock-inner"><div class="share-card"><div class="x-card"><img id="tw-image" alt="" /><div class="x-body"><div class="domain" id="tw-domain"></div><div class="title" id="tw-title"></div><div class="desc" id="tw-desc"></div></div></div></div></div>
         </section>
-
         <section class="card-shell" data-platform="linkedin">
           <h2>LinkedIn</h2>
-          <div class="mock-inner">
-            <div class="share-card">
-              <div class="li-card">
-                <img id="li-image" alt="" />
-                <div class="li-body">
-                  <div class="domain" id="li-domain"></div>
-                  <div class="title" id="li-title"></div>
-                  <div class="desc" id="li-desc"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="mock-inner"><div class="share-card"><div class="li-card"><img id="li-image" alt="" /><div class="li-body"><div class="domain" id="li-domain"></div><div class="title" id="li-title"></div><div class="desc" id="li-desc"></div></div></div></div></div>
         </section>
-
+        <section class="card-shell" data-platform="facebook">
+          <h2>Facebook</h2>
+          <div class="mock-inner"><div class="share-card"><div class="fb-card"><img id="fb-image" alt="" /><div class="fb-body"><div class="domain" id="fb-domain"></div><div class="title" id="fb-title"></div><div class="desc" id="fb-desc"></div></div></div></div></div>
+        </section>
         <section class="card-shell" data-platform="slack">
           <h2>Slack</h2>
-          <div class="mock-inner">
-            <div class="share-card">
-              <div class="slack-card">
-                <img id="sl-image" alt="" />
-                <div class="slack-body">
-                  <div class="domain" id="sl-domain"></div>
-                  <div class="title" id="sl-title"></div>
-                  <div class="desc" id="sl-desc"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="mock-inner"><div class="share-card"><div class="slack-card"><img id="sl-image" alt="" /><div class="slack-body"><div class="domain" id="sl-domain"></div><div class="title" id="sl-title"></div><div class="desc" id="sl-desc"></div></div></div></div></div>
+        </section>
+        <section class="card-shell" data-platform="discord">
+          <h2>Discord</h2>
+          <div class="mock-inner"><div class="share-card"><div class="discord-card"><img id="dc-image" alt="" /><div class="discord-body"><div class="domain" id="dc-domain"></div><div class="title" id="dc-title"></div><div class="desc" id="dc-desc"></div></div></div></div></div>
+        </section>
+        <section class="card-shell" data-platform="imessage">
+          <h2>iMessage</h2>
+          <div class="mock-inner"><div class="share-card"><div class="imessage-card"><div class="imessage-body"><div class="imessage-domain" id="im-domain"></div><div class="title" id="im-title"></div><div class="desc" id="im-desc"></div></div><img id="im-image" alt="" /></div></div></div>
         </section>
       </div>
 
@@ -380,11 +412,8 @@
           <span class="sep">·</span>
           <a href="<!--COFFEE_URL-->" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
         </div>
-        <div>
-          Made with love by
-          <a href="<!--AUTHOR_URL-->" target="_blank" rel="noopener noreferrer">Jessica Temporal</a>
-        </div>
-        <div>sharepreview v<!--VERSION--></div>
+        <div>Made with love by <a href="<!--AUTHOR_URL-->" target="_blank" rel="noopener noreferrer">Jessica Temporal</a></div>
+        <div>sharepreview v<span id="app-version">__VERSION__</span></div>
       </footer>
     </div>
 
@@ -393,6 +422,7 @@
       const data = JSON.parse(document.getElementById('payload').textContent);
       const root = document.documentElement;
       const themeToggle = document.getElementById('theme-toggle');
+      const copyLink = document.getElementById('copy-link');
       const THEME_KEY = 'sharepreview-theme';
 
       function applyTheme(theme) {
@@ -408,6 +438,39 @@
         applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
       });
 
+      copyLink.addEventListener('click', async () => {
+        const url = window.location.href;
+        try {
+          await navigator.clipboard.writeText(url);
+          copyLink.textContent = 'Copied!';
+          setTimeout(() => { copyLink.textContent = 'Copy preview link'; }, 1600);
+        } catch {
+          copyLink.textContent = 'Copy failed';
+          setTimeout(() => { copyLink.textContent = 'Copy preview link'; }, 1600);
+        }
+      });
+
+      const banner = document.getElementById('status-banner');
+      if (!data.valid) {
+        banner.className = 'status-banner bad';
+        banner.textContent = `Missing required tags: ${data.missing.join(', ')}`;
+      } else if (data.warnings?.length) {
+        banner.className = 'status-banner warn';
+        banner.textContent = data.warnings.join(' ');
+      } else {
+        banner.className = 'status-banner ok';
+        banner.textContent = 'OG tags look good for sharing.';
+      }
+
+      const imageInfo = document.getElementById('image-info');
+      if (data.image_info?.width) {
+        imageInfo.textContent = `og:image is ${data.image_info.width}×${data.image_info.height} (${data.image_info.format})`;
+      } else if (data.og.image) {
+        imageInfo.textContent = 'og:image found, but dimensions could not be read.';
+      } else {
+        imageInfo.textContent = 'No og:image found.';
+      }
+
       const domain = (() => {
         try { return new URL(data.og.url).hostname.replace(/^www\./, ''); }
         catch { return 'example.com'; }
@@ -417,20 +480,25 @@
 
       function fill(prefix, title, desc) {
         const img = document.getElementById(`${prefix}-image`);
+        if (!img) return;
         if (image) {
           img.src = image;
           img.alt = title;
         } else {
           img.remove();
         }
-        document.getElementById(`${prefix}-domain`).textContent = domain;
+        const domainEl = document.getElementById(`${prefix}-domain`);
+        if (domainEl) domainEl.textContent = domain;
         document.getElementById(`${prefix}-title`).textContent = title;
         document.getElementById(`${prefix}-desc`).textContent = desc;
       }
 
       fill('tw', data.twitter.title || data.og.title, data.twitter.description || data.og.description);
       fill('li', data.og.title, data.og.description);
+      fill('fb', data.og.title, data.og.description);
       fill('sl', data.og.title, data.og.description);
+      fill('dc', data.og.title, data.og.description);
+      fill('im', data.og.title, data.og.description);
 
       const warnings = document.getElementById('warnings');
       (data.warnings || []).forEach((warning) => {

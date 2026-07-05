@@ -24,7 +24,7 @@ function renderPreviewPage(payload) {
   return readTemplate()
     .replace('<!--SOURCE_URL-->', payload.source_url)
     .replace('<!--PAYLOAD_JSON-->', json)
-    .replaceAll('<!--VERSION-->', FOOTER.version)
+    .replaceAll('__VERSION__', FOOTER.version)
     .replaceAll('<!--GITHUB_URL-->', FOOTER.github)
     .replaceAll('<!--AUTHOR_URL-->', FOOTER.author)
     .replaceAll('<!--COFFEE_URL-->', FOOTER.coffee);
