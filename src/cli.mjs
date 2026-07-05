@@ -1,7 +1,6 @@
 import { spawn } from 'node:child_process';
-import { fetchPageMeta } from './meta.mjs';
-import { fetchImageInfo } from './image-dimensions.mjs';
-import { validatePreview } from './validate.mjs';
+import { assertLocalhostUrl } from './url-policy.mjs';
+import { buildPreviewPayload } from './build-payload.mjs';
 import { startPreviewServer } from './server.mjs';
 import { capturePreviewScreenshot } from './screenshot.mjs';
 import { installSkill } from './install-skill.mjs';
@@ -23,6 +22,7 @@ Options:
 
 Examples:
   sharepreview http://127.0.0.1:4000/my-post/
+  sharepreview http://127.0.0.1:5173/my-post/
   sharepreview http://127.0.0.1:4000/my-post/ --json
   sharepreview install-skill --target grok
 `);
@@ -44,6 +44,7 @@ function parseArgs(argv) {
   const flags = new Set(argv.filter((arg) => arg.startsWith('--')));
   const portIndex = argv.indexOf('--port');
   const port = portIndex >= 0 ? Number(argv[portIndex + 1]) : 4711;
+
   const screenshotIndex = argv.indexOf('--screenshot');
   const screenshotPath = screenshotIndex >= 0
     ? (argv[screenshotIndex + 1] && !argv[screenshotIndex + 1].startsWith('--')
@@ -101,24 +102,20 @@ export async function run(argv = process.argv.slice(2)) {
   let sourceUrl;
   try {
     sourceUrl = new URL(args.url).href;
-  } catch {
-    console.error(`Error: invalid URL: ${args.url}`);
+    assertLocalhostUrl(sourceUrl, 'Source URL');
+  } catch (error) {
+    console.error(`Error: ${error.message || `invalid URL: ${args.url}`}`);
     return 1;
   }
 
-  const preview = await fetchPageMeta(sourceUrl);
-  if (preview.og.image) {
-    preview.image_info = await fetchImageInfo(preview.og.image);
-    if (preview.image_info?.warnings?.length) {
-      preview.warnings.push(...preview.image_info.warnings);
-    }
-  }
+  const preview = await buildPreviewPayload(sourceUrl);
+  const validation = { valid: preview.valid, missing: preview.missing };
 
-  const validation = validatePreview(preview);
-  preview.valid = validation.valid;
-  preview.missing = validation.missing;
-
-  const server = await startPreviewServer(preview, { port: args.port });
+  const server = await startPreviewServer({
+    initialPayload: preview,
+    loadPayload: buildPreviewPayload,
+    port: args.port,
+  });
 
   const result = {
     source_url: preview.source_url,
@@ -145,6 +142,7 @@ export async function run(argv = process.argv.slice(2)) {
         preview.warnings.forEach((warning) => console.log(`Warning:     ${warning}`));
       }
       console.log('Press Ctrl+C to stop the preview server.');
+      console.log('Switch pages or re-fetch edits in the preview UI — no restart needed.');
     }
   }
 
