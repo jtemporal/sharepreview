@@ -17,5 +17,18 @@
     "cli",
     "agents"
   ],
+  "author": "Jessica Temporal <https://jtemporal.com>",
+  "homepage": "https://github.com/jtemporal/sharepreview#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jtemporal/sharepreview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jtemporal/sharepreview/issues"
+  },
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/jesstemporal"
+  },
   "license": "MIT"
 }
