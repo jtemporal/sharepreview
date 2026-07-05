@@ -4,7 +4,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'preview.html');
+const ROOT = path.join(__dirname, '..');
+const TEMPLATE_PATH = path.join(ROOT, 'templates', 'preview.html');
+const PACKAGE_PATH = path.join(ROOT, 'package.json');
+
+const FOOTER = {
+  version: JSON.parse(fs.readFileSync(PACKAGE_PATH, 'utf8')).version,
+  github: 'https://github.com/jtemporal/sharepreview',
+  author: 'https://jtemporal.com',
+  coffee: 'https://buymeacoffee.com/jesstemporal',
+};
 
 function readTemplate() {
   return fs.readFileSync(TEMPLATE_PATH, 'utf8');
@@ -14,7 +23,11 @@ function renderPreviewPage(payload) {
   const json = JSON.stringify(payload).replace(/</g, '\\u003c');
   return readTemplate()
     .replace('<!--SOURCE_URL-->', payload.source_url)
-    .replace('<!--PAYLOAD_JSON-->', json);
+    .replace('<!--PAYLOAD_JSON-->', json)
+    .replaceAll('<!--VERSION-->', FOOTER.version)
+    .replaceAll('<!--GITHUB_URL-->', FOOTER.github)
+    .replaceAll('<!--AUTHOR_URL-->', FOOTER.author)
+    .replaceAll('<!--COFFEE_URL-->', FOOTER.coffee);
 }
 
 async function proxyImage(targetUrl, res) {

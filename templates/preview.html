@@ -273,6 +273,28 @@
         overflow: auto;
         font-size: 0.78rem;
       }
+
+      footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.7;
+      }
+
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      footer a:hover { text-decoration: underline; }
+
+      footer .sep {
+        margin: 0 0.45rem;
+        opacity: 0.45;
+      }
     </style>
   </head>
   <body>
@@ -351,6 +373,19 @@
           <pre id="json"></pre>
         </div>
       </details>
+
+      <footer>
+        <div>
+          <a href="<!--GITHUB_URL-->" target="_blank" rel="noopener noreferrer">Contribute on GitHub</a>
+          <span class="sep">·</span>
+          <a href="<!--COFFEE_URL-->" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+        </div>
+        <div>
+          Made with love by
+          <a href="<!--AUTHOR_URL-->" target="_blank" rel="noopener noreferrer">Jessica Temporal</a>
+        </div>
+        <div>sharepreview v<!--VERSION--></div>
+      </footer>
     </div>
 
     <script id="payload" type="application/json"><!--PAYLOAD_JSON--></script>
