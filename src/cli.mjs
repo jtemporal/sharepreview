@@ -1,7 +1,9 @@
 import { spawn } from 'node:child_process';
 import { fetchPageMeta } from './meta.mjs';
+import { fetchImageInfo } from './image-dimensions.mjs';
 import { validatePreview } from './validate.mjs';
 import { startPreviewServer } from './server.mjs';
+import { capturePreviewScreenshot } from './screenshot.mjs';
 import { installSkill } from './install-skill.mjs';
 
 function printHelp() {
@@ -16,6 +18,7 @@ Options:
   --port <n>      Preview server port (default: 4711)
   --open          Open the preview in your default browser
   --validate      Exit 1 when required og tags are missing
+  --screenshot [file]  Save a PNG of the preview page (requires puppeteer)
   --help          Show this help
 
 Examples:
@@ -41,12 +44,18 @@ function parseArgs(argv) {
   const flags = new Set(argv.filter((arg) => arg.startsWith('--')));
   const portIndex = argv.indexOf('--port');
   const port = portIndex >= 0 ? Number(argv[portIndex + 1]) : 4711;
+  const screenshotIndex = argv.indexOf('--screenshot');
+  const screenshotPath = screenshotIndex >= 0
+    ? (argv[screenshotIndex + 1] && !argv[screenshotIndex + 1].startsWith('--')
+      ? argv[screenshotIndex + 1]
+      : 'share-preview.png')
+    : null;
   const positionals = [];
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg.startsWith('--')) {
-      if (arg === '--port') i += 1;
+      if (arg === '--port' || arg === '--screenshot') i += 1;
       continue;
     }
     positionals.push(arg);
@@ -58,6 +67,7 @@ function parseArgs(argv) {
     json: flags.has('--json'),
     open: flags.has('--open'),
     validate: flags.has('--validate'),
+    screenshot: screenshotPath,
     port: Number.isFinite(port) ? port : 4711,
   };
 }
@@ -97,7 +107,17 @@ export async function run(argv = process.argv.slice(2)) {
   }
 
   const preview = await fetchPageMeta(sourceUrl);
+  if (preview.og.image) {
+    preview.image_info = await fetchImageInfo(preview.og.image);
+    if (preview.image_info?.warnings?.length) {
+      preview.warnings.push(...preview.image_info.warnings);
+    }
+  }
+
   const validation = validatePreview(preview);
+  preview.valid = validation.valid;
+  preview.missing = validation.missing;
+
   const server = await startPreviewServer(preview, { port: args.port });
 
   const result = {
@@ -108,21 +128,42 @@ export async function run(argv = process.argv.slice(2)) {
     missing: validation.missing,
     og: preview.og,
     twitter: preview.twitter,
+    image_info: preview.image_info ?? null,
     warnings: preview.warnings,
   };
 
-  if (args.json) {
-    console.log(JSON.stringify(result, null, 2));
-  } else {
-    console.log(`Share preview: ${server.preview_url}`);
-    console.log(`Source:      ${preview.source_url}`);
-    if (!validation.valid) {
-      console.log(`Missing:     ${validation.missing.join(', ')}`);
+  if (!args.screenshot) {
+    if (args.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`Share preview: ${server.preview_url}`);
+      console.log(`Source:      ${preview.source_url}`);
+      if (!validation.valid) {
+        console.log(`Missing:     ${validation.missing.join(', ')}`);
+      }
+      if (preview.warnings.length) {
+        preview.warnings.forEach((warning) => console.log(`Warning:     ${warning}`));
+      }
+      console.log('Press Ctrl+C to stop the preview server.');
     }
-    if (preview.warnings.length) {
-      preview.warnings.forEach((warning) => console.log(`Warning:     ${warning}`));
+  }
+
+  if (args.screenshot) {
+    try {
+      const saved = await capturePreviewScreenshot(server.preview_url, args.screenshot);
+      result.screenshot = saved;
+      if (args.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(`Screenshot: ${saved}`);
+      }
+    } catch (error) {
+      console.error(error.message);
+      await server.close();
+      return 1;
     }
-    console.log('Press Ctrl+C to stop the preview server.');
+    await server.close();
+    return args.validate && !validation.valid ? 1 : 0;
   }
 
   if (args.validate && !validation.valid) {
