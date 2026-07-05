@@ -109,6 +109,12 @@ The skill lives at `skills/sharepreview/SKILL.md` and documents the preview work
 | Facebook/Twitter debuggers | Requires a public URL |
 | **sharepreview** | Full share-card mock from localhost + agent JSON |
 
+## Links
+
+- Author: [Jessica Temporal](https://jtemporal.com)
+- Repository: [github.com/jtemporal/sharepreview](https://github.com/jtemporal/sharepreview)
+- Support: [buymeacoffee.com/jesstemporal](https://buymeacoffee.com/jesstemporal)
+
 ## License
 
 MIT

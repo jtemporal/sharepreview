@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SITE_LINKS } from './site-links.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -10,9 +11,7 @@ const PACKAGE_PATH = path.join(ROOT, 'package.json');
 
 const FOOTER = {
   version: JSON.parse(fs.readFileSync(PACKAGE_PATH, 'utf8')).version,
-  github: 'https://github.com/jtemporal/sharepreview',
-  author: 'https://jtemporal.com',
-  coffee: 'https://buymeacoffee.com/jesstemporal',
+  ...SITE_LINKS,
 };
 
 function readTemplate() {
