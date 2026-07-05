@@ -6,6 +6,12 @@
   "bin": {
     "sharepreview": "./bin/sharepreview.mjs"
   },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^24.36.0"
+  },
   "engines": {
     "node": ">=18"
   },
