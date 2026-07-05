@@ -25,7 +25,13 @@ function bucketKey(property, name) {
     const [ns, key] = property.includes(':') ? property.split(':', 2) : ['', property];
     return { ns: ns || 'meta', key: key || property, value: property };
   }
-  if (name) return { ns: 'name', key: name, value: name };
+  if (name) {
+    if (name.includes(':')) {
+      const [ns, key] = name.split(':', 2);
+      return { ns, key, value: name };
+    }
+    return { ns: 'name', key: name, value: name };
+  }
   return null;
 }
 
