@@ -37,11 +37,29 @@ sharepreview http://127.0.0.1:4000/my-post/ --validate
 
 # Open the preview in your browser
 sharepreview http://127.0.0.1:4000/my-post/ --open
+
+# Save a PNG of the preview page (requires puppeteer)
+npm install puppeteer
+sharepreview http://127.0.0.1:4000/my-post/ --screenshot my-post-share.png
 ```
 
-The CLI fetches your page, extracts `og:*` and `twitter:*` meta tags, then serves a share-card mock UI on `http://127.0.0.1:4711/` (or the next free port).
+The CLI fetches your page, extracts `og:*` and `twitter:*` meta tags, checks `og:image` dimensions, then serves a share-card mock UI on `http://127.0.0.1:4711/` (or the next free port).
+
+The preview page includes:
+
+- X/Twitter, LinkedIn, Facebook, Slack, Discord, and iMessage mocks
+- Light/dark mode toggle
+- Validation banner for missing tags or image warnings
+- **Copy preview link** — copies the `http://127.0.0.1:4711/...` URL to your clipboard (handy to re-open, paste in notes, or share if you tunnel localhost)
+- Collapsible extracted metadata JSON
 
 Press **Ctrl+C** to stop the preview server.
+
+Run tests:
+
+```bash
+npm test
+```
 
 ## Agent skills
 

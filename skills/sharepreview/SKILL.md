@@ -28,8 +28,10 @@ sharepreview http://127.0.0.1:4000/<slug>/ --json
 
 3. Read the JSON output:
    - `valid` must be `true` (or report `missing` tags)
+   - Check `image_info` for og:image dimensions (target ~1200×630)
    - Give the author `preview_url` to open in a browser
 4. Keep the preview server running until the author approves.
+5. Optional: `sharepreview <url> --screenshot share-preview.png` (requires `npm install puppeteer`)
 5. Use `--validate` in CI or pre-commit checks:
 
 ```bash
