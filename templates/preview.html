@@ -64,19 +64,71 @@
 
       .header-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: 16px;
         margin-bottom: 16px;
       }
 
-      header h1 { margin: 0 0 8px; font-size: 1.5rem; }
+      header h1 { margin: 0; font-size: 1.5rem; }
 
-      header p {
-        margin: 0;
+      .source-bar {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+      }
+
+      .source-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+      }
+
+      .source-form label {
+        flex-shrink: 0;
         color: var(--muted);
-        font-size: 0.95rem;
-        word-break: break-all;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .source-form input {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+
+      .source-form input:focus {
+        outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+        border-color: var(--accent);
+      }
+
+      .source-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      @media (max-width: 720px) {
+        .source-form {
+          flex-wrap: wrap;
+        }
+
+        .source-form input {
+          flex: 1 1 100%;
+        }
+
+        .source-actions {
+          width: 100%;
+          justify-content: flex-end;
+        }
       }
 
       .header-actions {
@@ -350,12 +402,21 @@
       <div class="header-row">
         <header>
           <h1>Share Preview</h1>
-          <p id="source">Source: <!--SOURCE_URL--></p>
         </header>
         <div class="header-actions">
-          <button class="btn-ghost" id="copy-link" type="button">Copy preview link</button>
           <button class="btn-ghost" id="theme-toggle" type="button" aria-label="Toggle theme">Dark mode</button>
         </div>
+      </div>
+
+      <div class="source-bar">
+        <form id="source-form" class="source-form">
+          <label for="source-url">Source</label>
+          <input id="source-url" name="url" type="url" value="<!--SOURCE_URL-->" spellcheck="false" required />
+          <div class="source-actions">
+            <button class="btn-ghost" type="submit">Load</button>
+            <button class="btn-ghost" id="refresh-preview" type="button">Refresh</button>
+          </div>
+        </form>
       </div>
 
       <div id="status-banner" class="status-banner hidden"></div>
@@ -419,10 +480,11 @@
 
     <script id="payload" type="application/json"><!--PAYLOAD_JSON--></script>
     <script>
-      const data = JSON.parse(document.getElementById('payload').textContent);
       const root = document.documentElement;
       const themeToggle = document.getElementById('theme-toggle');
-      const copyLink = document.getElementById('copy-link');
+      const refreshButton = document.getElementById('refresh-preview');
+      const sourceForm = document.getElementById('source-form');
+      const sourceInput = document.getElementById('source-url');
       const THEME_KEY = 'sharepreview-theme';
 
       function applyTheme(theme) {
@@ -438,77 +500,127 @@
         applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
       });
 
-      copyLink.addEventListener('click', async () => {
-        const url = window.location.href;
-        try {
-          await navigator.clipboard.writeText(url);
-          copyLink.textContent = 'Copied!';
-          setTimeout(() => { copyLink.textContent = 'Copy preview link'; }, 1600);
-        } catch {
-          copyLink.textContent = 'Copy failed';
-          setTimeout(() => { copyLink.textContent = 'Copy preview link'; }, 1600);
-        }
-      });
+      function renderPreview(data, cacheBust = '') {
+        const banner = document.getElementById('status-banner');
+        banner.classList.remove('hidden');
 
-      const banner = document.getElementById('status-banner');
-      if (!data.valid) {
-        banner.className = 'status-banner bad';
-        banner.textContent = `Missing required tags: ${data.missing.join(', ')}`;
-      } else if (data.warnings?.length) {
-        banner.className = 'status-banner warn';
-        banner.textContent = data.warnings.join(' ');
-      } else {
-        banner.className = 'status-banner ok';
-        banner.textContent = 'OG tags look good for sharing.';
-      }
-
-      const imageInfo = document.getElementById('image-info');
-      if (data.image_info?.width) {
-        imageInfo.textContent = `og:image is ${data.image_info.width}×${data.image_info.height} (${data.image_info.format})`;
-      } else if (data.og.image) {
-        imageInfo.textContent = 'og:image found, but dimensions could not be read.';
-      } else {
-        imageInfo.textContent = 'No og:image found.';
-      }
-
-      const domain = (() => {
-        try { return new URL(data.og.url).hostname.replace(/^www\./, ''); }
-        catch { return 'example.com'; }
-      })();
-
-      const image = data.og.image ? `/proxy?url=${encodeURIComponent(data.og.image)}` : '';
-
-      function fill(prefix, title, desc) {
-        const img = document.getElementById(`${prefix}-image`);
-        if (!img) return;
-        if (image) {
-          img.src = image;
-          img.alt = title;
+        if (!data.valid) {
+          banner.className = 'status-banner bad';
+          banner.textContent = `Missing required tags: ${data.missing.join(', ')}`;
+        } else if (data.warnings?.length) {
+          banner.className = 'status-banner warn';
+          banner.textContent = data.warnings.join(' ');
         } else {
-          img.remove();
+          banner.className = 'status-banner ok';
+          banner.textContent = 'OG tags look good for sharing.';
         }
-        const domainEl = document.getElementById(`${prefix}-domain`);
-        if (domainEl) domainEl.textContent = domain;
-        document.getElementById(`${prefix}-title`).textContent = title;
-        document.getElementById(`${prefix}-desc`).textContent = desc;
+
+        const imageInfo = document.getElementById('image-info');
+        if (data.image_info?.width) {
+          imageInfo.textContent = `og:image is ${data.image_info.width}×${data.image_info.height} (${data.image_info.format})`;
+        } else if (data.og.image) {
+          imageInfo.textContent = 'og:image found, but dimensions could not be read.';
+        } else {
+          imageInfo.textContent = 'No og:image found.';
+        }
+
+        const domain = (() => {
+          try { return new URL(data.og.url).hostname.replace(/^www\./, ''); }
+          catch { return 'example.com'; }
+        })();
+
+        const image = data.og.image
+          ? `/proxy?url=${encodeURIComponent(data.og.image)}${cacheBust}`
+          : '';
+
+        function fill(prefix, title, desc) {
+          const img = document.getElementById(`${prefix}-image`);
+          if (!img) return;
+          if (image) {
+            img.src = image;
+            img.alt = title;
+          } else {
+            img.removeAttribute('src');
+          }
+          const domainEl = document.getElementById(`${prefix}-domain`);
+          if (domainEl) domainEl.textContent = domain;
+          document.getElementById(`${prefix}-title`).textContent = title;
+          document.getElementById(`${prefix}-desc`).textContent = desc;
+        }
+
+        fill('tw', data.twitter.title || data.og.title, data.twitter.description || data.og.description);
+        fill('li', data.og.title, data.og.description);
+        fill('fb', data.og.title, data.og.description);
+        fill('sl', data.og.title, data.og.description);
+        fill('dc', data.og.title, data.og.description);
+        fill('im', data.og.title, data.og.description);
+
+        const warnings = document.getElementById('warnings');
+        warnings.replaceChildren();
+        (data.warnings || []).forEach((warning) => {
+          const li = document.createElement('li');
+          li.textContent = warning;
+          warnings.appendChild(li);
+        });
+        warnings.toggleAttribute('hidden', !data.warnings?.length);
+
+        document.getElementById('json').textContent = JSON.stringify(data, null, 2);
+        sourceInput.value = data.source_url;
       }
 
-      fill('tw', data.twitter.title || data.og.title, data.twitter.description || data.og.description);
-      fill('li', data.og.title, data.og.description);
-      fill('fb', data.og.title, data.og.description);
-      fill('sl', data.og.title, data.og.description);
-      fill('dc', data.og.title, data.og.description);
-      fill('im', data.og.title, data.og.description);
+      async function requestPreview(path, options = {}) {
+        const response = await fetch(path, options);
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        return response.json();
+      }
 
-      const warnings = document.getElementById('warnings');
-      (data.warnings || []).forEach((warning) => {
-        const li = document.createElement('li');
-        li.textContent = warning;
-        warnings.appendChild(li);
+      renderPreview(JSON.parse(document.getElementById('payload').textContent));
+
+      sourceForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const loadButton = sourceForm.querySelector('button[type="submit"]');
+        loadButton.disabled = true;
+        loadButton.textContent = 'Loading…';
+
+        try {
+          const data = await requestPreview('/source', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: sourceInput.value }),
+          });
+          renderPreview(data, `&_=${Date.now()}`);
+          loadButton.textContent = 'Loaded';
+        } catch (error) {
+          loadButton.textContent = 'Load failed';
+          console.error(error);
+        } finally {
+          setTimeout(() => {
+            loadButton.disabled = false;
+            loadButton.textContent = 'Load';
+          }, 1200);
+        }
       });
-      if (!data.warnings?.length) warnings.remove();
 
-      document.getElementById('json').textContent = JSON.stringify(data, null, 2);
+      refreshButton.addEventListener('click', async () => {
+        refreshButton.disabled = true;
+        refreshButton.textContent = 'Refreshing…';
+
+        try {
+          const data = await requestPreview('/refresh', { method: 'POST' });
+          renderPreview(data, `&_=${Date.now()}`);
+          refreshButton.textContent = 'Refreshed';
+        } catch (error) {
+          refreshButton.textContent = 'Refresh failed';
+          console.error(error);
+        } finally {
+          setTimeout(() => {
+            refreshButton.disabled = false;
+            refreshButton.textContent = 'Refresh';
+          }, 1200);
+        }
+      });
 
       const tabs = document.getElementById('tabs');
       const grid = document.getElementById('grid');
